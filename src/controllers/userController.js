@@ -11,7 +11,7 @@ const getUser = (req, res) => {
 }
 
 const createUser = (req, res) => {
-    const {name, email, phone, gender} = res.body;
+    const {name, email, phone, gender} = req.body;
     res.status(201).json({
         message: "User create successfully",
         user: {
