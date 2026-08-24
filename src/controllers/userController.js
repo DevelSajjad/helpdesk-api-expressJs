@@ -1,7 +1,12 @@
-const getUsers = (req, res) => {
-    res.json({
-        message: "All Users Show"
-    }); 
+const pool = require('../config/database');
+
+const getUsers = async (req, res, next) => {
+    try {
+        const [result] = await pool.query("select * from users")
+        return res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
 };
 
 const getUser = (req, res) => {
@@ -10,17 +15,39 @@ const getUser = (req, res) => {
     })
 }
 
-const createUser = (req, res) => {
-    const {name, email, phone, gender} = req.body;
-    res.status(201).json({
-        message: "User create successfully",
-        user: {
-            name: name,
-            email: email,
-            phone: phone,
-            gender: gender
-        },
-    });
+const createUser = async (req, res, next) => {
+    try {
+        const {name, email, password, role} = req.body;
+        const [result] = await pool.query(
+            `
+                insert into users (
+                    name,
+                    email,
+                    password,
+                    role
+                )
+                values (?, ?, ?, ?)
+            `,
+            [
+                name,
+                email,
+                password,
+                role || "customer"
+            ]
+        );
+        console.log(result);
+        return res.status(201).json({
+            message: "User create successfully",
+            user: {
+                id: result.insertId,
+                name: name,
+                email: email,
+                role: role,
+            },
+        });
+    } catch (error) {
+        next(error)
+    }
 }
 
 const updateUser = (req, res) => {
