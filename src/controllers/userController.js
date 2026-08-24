@@ -23,8 +23,44 @@ const createUser = (req, res) => {
     });
 }
 
+const updateUser = (req, res) => {
+    const {id} = req.params;
+    const {name, email} = req.body;
+    res.status(201).json({
+        message: "User update successfully",
+        user: {
+            id: id,
+            name: name,
+            email: email
+        }
+    })
+};
+
+const updateStatus = (req, res) => {
+    const {id} = req.params;
+    const {status} = req.body;
+    res.status(200).json({
+        message: "Status update successfully",
+        user: {
+            id: id,
+            status: status
+        }
+    })
+}
+
+const deleteUser = (req, res) => {
+    const {id} = req.params;
+    res.status(200).json({
+        message: `${id} this user deleted`
+    })
+
+}
+
 module.exports = {
     getUsers,
     getUser,
-    createUser
+    createUser,
+    updateUser,
+    updateStatus,
+    deleteUser
 };

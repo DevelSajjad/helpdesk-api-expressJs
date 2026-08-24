@@ -2,6 +2,8 @@ const express = require('express');
 
 const userRoutes = require("./routes/userRoutes");
 
+const ticketRoutes = require("./routes/ticketRoutes");
+
 const app = express();
 
 const PORT = 8090;
@@ -17,6 +19,8 @@ app.get('/', (req, res) => {
 });
 
 app.use("/users", userRoutes);
+
+app.use("/tickets", ticketRoutes);
 
 
 app.listen(PORT, () => {
