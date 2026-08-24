@@ -2,6 +2,14 @@ const express = require('express');
 
 const userRoutes = require("./routes/userRoutes");
 
+const ticketRoutes = require("./routes/ticketRoutes");
+
+const loggerMiddleware = require('./middleware/loggerMiddleware');
+
+const authenticate = require('./middleware/authenticateMiddleware');
+
+const errorMiddleware = require('./middleware/errorMiddleware');
+
 const app = express();
 
 const PORT = 8090;
@@ -16,8 +24,13 @@ app.get('/', (req, res) => {
     });
 });
 
-app.use("/users", userRoutes);
+app.use(loggerMiddleware);
 
+app.use("/users",  authenticate, userRoutes);
+
+app.use("/tickets", authenticate, ticketRoutes);
+
+app.use(errorMiddleware);
 
 app.listen(PORT, () => {
     console.log('Server is running http://localhost:8090');
