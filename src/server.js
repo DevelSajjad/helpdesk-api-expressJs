@@ -4,6 +4,10 @@ const userRoutes = require("./routes/userRoutes");
 
 const ticketRoutes = require("./routes/ticketRoutes");
 
+const loggerMiddleware = require('./middleware/loggerMiddleware');
+
+const authenticate = require('./middleware/authenticateMiddleware');
+
 const app = express();
 
 const PORT = 8090;
@@ -18,9 +22,11 @@ app.get('/', (req, res) => {
     });
 });
 
-app.use("/users", userRoutes);
+app.use(loggerMiddleware);
 
-app.use("/tickets", ticketRoutes);
+app.use("/users",  authenticate, userRoutes);
+
+app.use("/tickets", authenticate, ticketRoutes);
 
 
 app.listen(PORT, () => {
