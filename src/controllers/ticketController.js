@@ -1,3 +1,5 @@
+const AppError = require('../utils/AppError');
+
 const getTickets = (req, res) => {
     res.status(200).json({
         message: "All tickets"
