@@ -8,6 +8,8 @@ const ticketRoutes = require("./routes/ticketRoutes");
 
 const databaseTestConnect = require('./routes/databaseConnectionTestRoutes');
 
+const databasePrismaTestRoutes = require('./routes/databasePrismaTestRoutes');
+
 const loggerMiddleware = require('./middleware/loggerMiddleware');
 
 const authenticate = require('./middleware/authenticateMiddleware');
@@ -28,13 +30,16 @@ app.get('/', (req, res) => {
     });
 });
 
+app.use("/testdatabase", databaseTestConnect);
+
+app.use("/test-prisma-database", databasePrismaTestRoutes);
+
 app.use(loggerMiddleware);
 
 app.use("/users",  authenticate, userRoutes);
 
 app.use("/tickets", authenticate, ticketRoutes);
 
-app.use("/testdatabase", databaseTestConnect);
 
 app.use(errorMiddleware);
 
