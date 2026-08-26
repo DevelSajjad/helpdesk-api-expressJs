@@ -1,8 +1,12 @@
+require('dotenv').config();
+
 const express = require('express');
 
 const userRoutes = require("./routes/userRoutes");
 
 const ticketRoutes = require("./routes/ticketRoutes");
+
+const databaseTestConnect = require('./routes/databaseConnectionTestRoutes');
 
 const loggerMiddleware = require('./middleware/loggerMiddleware');
 
@@ -12,7 +16,7 @@ const errorMiddleware = require('./middleware/errorMiddleware');
 
 const app = express();
 
-const PORT = 8090;
+const PORT = process.env.PORT;
 
 app.use(express.json());
 
@@ -29,6 +33,8 @@ app.use(loggerMiddleware);
 app.use("/users",  authenticate, userRoutes);
 
 app.use("/tickets", authenticate, ticketRoutes);
+
+app.use("/testdatabase", databaseTestConnect);
 
 app.use(errorMiddleware);
 
