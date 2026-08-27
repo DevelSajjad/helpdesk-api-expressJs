@@ -1,3 +1,5 @@
+const validateMiddleware = require('../middleware/validateMiddleware');
+const { createUserValidator } = require("../validators/createUserValidator");
 const express = require('express');
 const { getUsers, getUser, createUser, updateUser, updateStatus, deleteUser } = require('../controllers/userController');
 
@@ -7,7 +9,7 @@ router.get("/", getUsers);
 
 router.get('/:id', getUser);
 
-router.post("/", createUser);
+router.post("/", createUserValidator, validateMiddleware, createUser);
 
 router.put('/:id', updateUser);
 

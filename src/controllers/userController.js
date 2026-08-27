@@ -1,6 +1,7 @@
 // const pool = require('../config/database');
 const prisma = require('../config/prisma');
 const AppError = require('../utils/AppError');
+const bcrypt = require('bcrypt');
 
 const getUsers = async (req, res, next) => {
     try {
@@ -69,12 +70,13 @@ const createUser = async (req, res, next) => {
         //         role || "customer"
         //     ]
         // );
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         const result = await prisma.user.create({
             data: {
                 name,
                 email,
-                password,
+                password: hashedPassword,
                 role:role || "CUSTOMER"
             },
 
@@ -86,7 +88,7 @@ const createUser = async (req, res, next) => {
                 createdAt: true,
             }
         })
-        console.log(result);
+
         return res.status(201).json({
             success: true,
             message: "User create successfully",
