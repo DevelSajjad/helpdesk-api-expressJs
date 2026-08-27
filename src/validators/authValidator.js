@@ -48,7 +48,7 @@ const registerValidator = [
         .withMessage("Role is required.")
         .isString()
         .withMessage("Role is must be a string.")
-        .isIn(["SUPERADMIN", "ADMIN", "CUSTOMER"])
+        .isIn(["SUPER_ADMIN", "COMPANY_ADMIN", "AGENT", "CUSTOMER"])
         .withMessage("Invalid role."),
 ];
 
