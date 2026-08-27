@@ -1,71 +1,159 @@
-const pool = require('../config/database');
+// const pool = require('../config/database');
+const prisma = require('../config/prisma');
+const AppError = require('../utils/AppError');
 
 const getUsers = async (req, res, next) => {
     try {
-        const [result] = await pool.query("select * from users")
-        return res.status(200).json(result);
+        // const [result] = await pool.query("select * from users")
+
+        const results = await prisma.user.findMany({
+            orderBy: {
+                id : "desc"
+            },
+
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                createdAt: true,
+            }
+        });
+
+        return res.status(200).json({
+            success: true,
+            data: results
+        });
     } catch (error) {
         next(error);
     }
 };
 
-const getUser = (req, res) => {
-    res.json({
-        message: `The user id is: ${req.params.id}`
-    })
+const getUser = async (req, res, next) => {
+    try {
+        const {id} = req.params;
+        const user = await prisma.user.findUnique({
+            where: {
+                id: Number(id)
+            },
+
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+            }
+        })
+    } catch (error) {
+        next(error);
+    }
 }
 
 const createUser = async (req, res, next) => {
     try {
         const {name, email, password, role} = req.body;
-        const [result] = await pool.query(
-            `
-                insert into users (
-                    name,
-                    email,
-                    password,
-                    role
-                )
-                values (?, ?, ?, ?)
-            `,
-            [
+        // const [result] = await pool.query(
+        //     `
+        //         insert into users (
+        //             name,
+        //             email,
+        //             password,
+        //             role
+        //         )
+        //         values (?, ?, ?, ?)
+        //     `,
+        //     [
+        //         name,
+        //         email,
+        //         password,
+        //         role || "customer"
+        //     ]
+        // );
+
+        const result = await prisma.user.create({
+            data: {
                 name,
                 email,
                 password,
-                role || "customer"
-            ]
-        );
+                role:role || "CUSTOMER"
+            },
+
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                createdAt: true,
+            }
+        })
         console.log(result);
         return res.status(201).json({
+            success: true,
             message: "User create successfully",
-            user: {
-                id: result.insertId,
-                name: name,
-                email: email,
-                role: role,
-            },
+            data: result
         });
     } catch (error) {
         next(error)
     }
 }
 
-const updateUser = (req, res) => {
+const updateUser = async (req, res, next) => {
     const {id} = req.params;
-    const {name, email} = req.body;
-    res.status(201).json({
-        message: "User update successfully",
-        user: {
-            id: id,
-            name: name,
-            email: email
+    const {name, email, role} = req.body;
+    try {
+        const user = await prisma.user.findUnique({
+            where: {
+                id: Number(id)
+            }
+        });
+
+        if (!user) {
+            return next(new AppError("User not found", 404));
         }
-    })
+        
+        const result = await prisma.user.update({
+            where: {
+                id: Number(id)
+            },
+            data: {
+                name,
+                role: role || "CUSTOMER"
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+            }
+        })
+        res.status(201).json({
+            success: true,
+            message: "User update successfully",
+            data: result
+        })
+    } catch (error) {
+        next(new AppError(error.message, 500))
+    }
 };
 
-const updateStatus = (req, res) => {
+const updateStatus = async (req, res, next) => {
     const {id} = req.params;
     const {status} = req.body;
+    try {
+        const user = await prisma.user.findUnique({
+            where: {
+                id: Number(id)
+            }
+        });
+
+        if (!user) {
+            return next(new AppError("User not found", 404));
+        }
+
+    
+    } catch (error) {
+        
+    }
     res.status(200).json({
         message: "Status update successfully",
         user: {
@@ -75,11 +163,30 @@ const updateStatus = (req, res) => {
     })
 }
 
-const deleteUser = (req, res) => {
+const deleteUser = async (req, res, next) => {
     const {id} = req.params;
-    res.status(200).json({
-        message: `${id} this user deleted`
-    })
+    try {
+        const user = await prisma.user.findUnique({
+            where: {
+                id: Number(id)
+            }
+        });
+        if (!user) {
+            return next(new AppError("User not found", 404));
+        }
+
+        await prisma.user.delete({
+            where: {
+                id: Number(id)
+            }
+        });
+
+        res.status(200).json({
+            message: `${id} this user deleted`
+        })
+    } catch (error) {
+        next(new AppError(error.message, 500));
+    }
 
 }
 
