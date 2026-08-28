@@ -123,9 +123,10 @@ const createUser = async (req, res, next) => {
 const updateUser = async (req, res, next) => {
     const {id} = req.params;
     const {name, email, role} = req.body;
-    const {role, companyId} = req.user;
+    const {companyId} = req.user;
+    const userRole = req.user.role;
     const whereClause = {};
-    if (role != "SUPER_ADMIN") {
+    if (userRole != "SUPER_ADMIN") {
         whereClause.id = Number(id)
     } else {
         whereClause.id = Number(id);

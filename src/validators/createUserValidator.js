@@ -10,11 +10,14 @@ const createUserValidator = [
         .withMessage("Name is must be less than 150 characters."),
 
     body("email")
-    .isEmail()
-    .withMessage("Must be a valid email address.")
     .notEmpty()
     .withMessage("Email is required.")
+    .isEmail()
+    .withMessage("Must be a valid email address.")
     .custom( async (value) => {
+        if (!value) {
+            return Promise.reject("Email is required.");
+        }
         const user = await prisma.user.findUnique({
             where: { email: value}
         });

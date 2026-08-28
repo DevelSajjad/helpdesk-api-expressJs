@@ -1,4 +1,7 @@
 const express = require('express');
+const { createTicketValidator } = require('../validators/ticketValidator');
+const validateMiddleware = require('../middleware/validateMiddleware');
+const roleMiddleware = require('../middleware/roleMiddleware');
 
 const {getTickets, createTicket, updateTicket, updateTicketStatus, deleteTicket} = require('../controllers/ticketController');
 
@@ -6,7 +9,7 @@ const router = express.Router();
 
 router.get('/', getTickets);
 
-router.post('/', createTicket);
+router.post('/', createTicketValidator, validateMiddleware, roleMiddleware("CUSTOMER", "AGENT"), createTicket);
 
 router.put('/:id', updateTicket);
 

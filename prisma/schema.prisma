@@ -20,6 +20,8 @@ model Company {
   description String @db.Text
 
   users   User[]
+  departments Department[]
+  tickets Ticket[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -35,6 +37,8 @@ model User {
   role     String    @default("CUSTOMER")
 
   company Company? @relation(fields: [companyId], references: [id])
+  createdTickets Ticket[] @relation("CustomerTicket")
+  assignedTickets Ticket[] @relation("AgentTicket")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -45,4 +49,64 @@ enum Role {
   COMPANY_ADMIN
   AGENT
   CUSTOMER
+}
+
+model Department {
+  id Int @id @default(autoincrement())
+  companyId Int
+  name String
+  description String?
+
+  tickets Ticket[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company? @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+}
+
+model Ticket {
+  id Int @id @default(autoincrement())
+  ticketNumber String? @unique
+  subject String 
+  description String 
+  
+  status TicketStatus @default(OPEN)
+  priority TicketPriority @default(LOW)
+
+  departmentId Int?
+  companyId Int
+  customerId Int?
+  agentId Int?
+
+  department Department? @relation(fields: [departmentId], references: [id])
+  company Company? @relation(fields: [companyId], references: [id])
+  customer User? @relation("CustomerTicket", fields: [customerId], references: [id])
+  agent User? @relation("AgentTicket", fields: [agentId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([departmentId, companyId, customerId, agentId])
+  @@index([ticketNumber, status, priority])
+
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_FOR_CUSTOMER
+  RESOLVED
+  CLOSED
+  ON_HOLD
+  CANCELLED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  EMERGENCY
 }
