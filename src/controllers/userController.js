@@ -8,7 +8,7 @@ const getUsers = async (req, res, next) => {
         // const [result] = await pool.query("select * from users")
         const {role, companyId} = req.user;
         const whereClause = {};
-        if(role != "SUPER_ADMIN") {
+        if(role != "SUPER_ADMIN" && role == "COMPANY_ADMIN") {
             whereClause.companyId = companyId
         };
 
@@ -24,6 +24,12 @@ const getUsers = async (req, res, next) => {
                 email: true,
                 role: true,
                 createdAt: true,
+                company: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                }
             }
         });
 
