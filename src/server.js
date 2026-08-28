@@ -2,9 +2,15 @@ require('dotenv').config();
 
 const express = require('express');
 
+const authRoutes = require("./routes/authRoutes");
+
 const userRoutes = require("./routes/userRoutes");
 
 const ticketRoutes = require("./routes/ticketRoutes");
+
+const companyRoutes = require('./routes/companyRoutes');
+
+const departmentRoutes = require("./routes/departmentRoutes");
 
 const databaseTestConnect = require('./routes/databaseConnectionTestRoutes');
 
@@ -34,11 +40,17 @@ app.use("/testdatabase", databaseTestConnect);
 
 app.use("/test-prisma-database", databasePrismaTestRoutes);
 
-app.use(loggerMiddleware);
+app.use("/auth", authRoutes);
+
+// app.use(loggerMiddleware);
 
 app.use("/users",  authenticate, userRoutes);
 
 app.use("/tickets", authenticate, ticketRoutes);
+
+app.use('/company', authenticate, companyRoutes);
+
+app.use("/departments", authenticate, departmentRoutes);
 
 
 app.use(errorMiddleware);
