@@ -45,9 +45,11 @@ const getUsers = async (req, res, next) => {
 const getUser = async (req, res, next) => {
     try {
         const {id} = req.params;
-        const user = await prisma.user.findUnique({
+        const {companyId} = req.user;
+        const user = await prisma.user.findFirst({
             where: {
-                id: Number(id)
+                id: Number(id),
+                companyId: companyId
             },
 
             select: {
@@ -121,11 +123,17 @@ const createUser = async (req, res, next) => {
 const updateUser = async (req, res, next) => {
     const {id} = req.params;
     const {name, email, role} = req.body;
+    const {role, companyId} = req.user;
+    const whereClause = {};
+    if (role != "SUPER_ADMIN") {
+        whereClause.id = Number(id)
+    } else {
+        whereClause.id = Number(id);
+        whereClause.companyId = Number(companyId);
+    }
     try {
-        const user = await prisma.user.findUnique({
-            where: {
-                id: Number(id)
-            }
+        const user = await prisma.user.findFirst({
+            where: whereClause
         });
 
         if (!user) {
@@ -186,11 +194,17 @@ const updateStatus = async (req, res, next) => {
 
 const deleteUser = async (req, res, next) => {
     const {id} = req.params;
+    const {role, companyId} = req.user;
+    const whereClause = {};
+    if (role != "SUPER_ADMIN") {
+        whereClause.id = Number(id)
+    } else {
+        whereClause.id = Number(id);
+        whereClause.companyId = Number(companyId);
+    }
     try {
-        const user = await prisma.user.findUnique({
-            where: {
-                id: Number(id)
-            }
+        const user = await prisma.user.findFirst({
+            where: whereClause
         });
         if (!user) {
             return next(new AppError("User not found", 404));
