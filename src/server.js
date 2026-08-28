@@ -8,6 +8,8 @@ const userRoutes = require("./routes/userRoutes");
 
 const ticketRoutes = require("./routes/ticketRoutes");
 
+const companyRoutes = require('./routes/companyRoutes');
+
 const databaseTestConnect = require('./routes/databaseConnectionTestRoutes');
 
 const databasePrismaTestRoutes = require('./routes/databasePrismaTestRoutes');
@@ -43,6 +45,8 @@ app.use("/auth", authRoutes);
 app.use("/users",  authenticate, userRoutes);
 
 app.use("/tickets", authenticate, ticketRoutes);
+
+app.use('/company', authenticate, companyRoutes);
 
 
 app.use(errorMiddleware);

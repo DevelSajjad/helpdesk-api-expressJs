@@ -6,8 +6,14 @@ const bcrypt = require('bcrypt');
 const getUsers = async (req, res, next) => {
     try {
         // const [result] = await pool.query("select * from users")
+        const {role, companyId} = req.user;
+        const whereClause = {};
+        if(role != "SUPER_ADMIN") {
+            whereClause.companyId = companyId
+        };
 
         const results = await prisma.user.findMany({
+            where: whereClause,
             orderBy: {
                 id : "desc"
             },
@@ -70,10 +76,16 @@ const createUser = async (req, res, next) => {
         //         role || "customer"
         //     ]
         // );
+        const companyId = req.user.companyId;
+        if (!companyId) {
+            return next(new AppError("Company Information is missing.", 400));
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const result = await prisma.user.create({
             data: {
+                companyId,
                 name,
                 email,
                 password: hashedPassword,
@@ -82,6 +94,7 @@ const createUser = async (req, res, next) => {
 
             select: {
                 id: true,
+                companyId: true,
                 name: true,
                 email: true,
                 role: true,

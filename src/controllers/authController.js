@@ -32,7 +32,7 @@ const login = async (req, res, next) => {
 
         const user = await prisma.user.findUnique({
             where: { email: email},
-            select: {email: true, password: true, id: true, role: true}
+            select: {email: true, password: true, id: true, role: true, companyId: true}
         });
 
         
@@ -51,7 +51,8 @@ const login = async (req, res, next) => {
             {
                 id: user.id,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                companyId: user.companyId
             },
             process.env.JWT_SECRET,
             {
@@ -66,7 +67,8 @@ const login = async (req, res, next) => {
             data: {
                 id: user.id,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                companyId: user.companyId
             }
         })
 
