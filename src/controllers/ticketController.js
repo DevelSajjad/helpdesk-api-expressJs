@@ -1,10 +1,91 @@
 const AppError = require('../utils/AppError');
 const prisma = require("../config/prisma");
 
-const getTickets = (req, res) => {
-    res.status(200).json({
-        message: "All tickets"
-    })
+const getTicketWhereCondition = (req) => {
+    const { role, companyId, id } = req.user; 
+    const where = {};
+
+    if (role != "SUPER_ADMIN") {
+        where.companyId = companyId;
+    }
+
+    if (role == "CUSTOMER") {
+        where.customerId = id;
+    }
+
+    if (role == "AGENT") {
+        where.agentId = id;
+    }
+
+    return where;
+};
+
+const includeRelations = (req) => {
+    const { role } = req.user;
+    const realtion = {
+        department: {
+            select: {
+                id: true,
+                name: true,
+            }
+        },
+    
+        customer: {
+            select: {
+                id: true,
+                name: true,
+                email: true,
+            }
+        }
+    }
+
+    if (role == "SUPER_ADMIN") {
+        realtion.agent = {
+            select: {
+                id: true,
+                name: true,
+                email: true,
+            }
+        }
+    }
+};
+
+const getTickets = async (req, res, next) => {
+    try {
+        const result = await prisma.ticket.findMany({
+            where : getTicketWhereCondition(req),
+            include: includeRelations(req)
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Ticket fetch successfully",
+            data: result
+        })
+    } catch (error) {
+        next(error);
+    }
+}
+
+const getTicket = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const where = getTicketWhereCondition(req);
+        where.id = Number(id);
+        return res.json(where);
+        const result = await prisma.ticket.findMany({
+            where : getTicketWhereCondition(req),
+            include: includeRelations(req)
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Ticket fetch successfully",
+            data: result
+        })
+    } catch (error) {
+        next(error);
+    }
 }
 
 const createTicket = async (req, res, next) => {
@@ -94,16 +175,55 @@ const updateTicket = (req, res) => {
     })
 }
 
-const updateTicketStatus = (req, res) => {
-    const {id} = req.params;
-    const {subject, priority, status} = req.body;
-    res.status(200).json({
-        message: "Ticket status update successfully",
-        ticket: {
-            "id": id,
-            "status": "close"
+const agentAssignTicket = async (req, res, next) => {
+    const {companyId, id: userId } = req.user;
+    const {id: ticketId } = req.params;
+    const {agentId } = req.body;
+
+    try {
+        const agentExist = await prisma.user.findFirst({
+            where: {
+                id: Number(agentId),
+                companyId: Number(companyId),
+                role: "AGENT"
+            }
+        })
+
+        if (!agentAssignTicket) {
+            return next(new AppError("Agent not found", 404));
         }
-    })
+
+        const ticket = await prisma.ticket.findFirst({
+            where: {
+                id: Number(ticketId),
+                companyId: Number(companyId)
+            }
+        })
+
+        if (!ticket) {
+            return next(new AppError("Ticket not found", 404));
+        }
+
+        const assignAgent = await prisma.ticket.update({
+            where: {
+                id: Number(ticketId),
+                companyId: Number(companyId)
+            },
+
+            data: {
+                agentId: Number(agentId),
+                customerId: Number(userId)
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "This ticket assign the agent",
+            data: assignAgent
+        })
+    } catch (error) {
+        next(error);
+    }
 }
 
 const deleteTicket = (req, res) => {
@@ -122,6 +242,6 @@ module.exports = {
     getTickets,
     createTicket,
     updateTicket,
-    updateTicketStatus,
+    agentAssignTicket,
     deleteTicket
 };
