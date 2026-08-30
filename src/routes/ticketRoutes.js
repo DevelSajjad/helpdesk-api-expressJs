@@ -3,20 +3,20 @@ const { createTicketValidator } = require('../validators/ticketValidator');
 const validateMiddleware = require('../middleware/validateMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 
-const {getTickets, getTicket, createTicket, updateTicket, updateTicketStatus, deleteTicket} = require('../controllers/ticketController');
+const {getTickets, createTicket, updateTicket, agentAssignTicket, deleteTicket} = require('../controllers/ticketController');
 
 const router = express.Router();
 
-router.get('/', roleMiddleware("SUPER_ADMIN", "CUSTOMER", "AGENT"), getTickets);
+router.get('/', roleMiddleware("SUPER_ADMIN", "CUSTOMER", "AGENT", "COMPANY_ADMIN"), getTickets);
 
-router.get('/:id', roleMiddleware("SUPER_ADMIN", "CUSTOMER", "AGENT"), getTicket);
+router.get('/:id', roleMiddleware("SUPER_ADMIN", "CUSTOMER", "AGENT", "COMPANY_ADMIN"), getTickets);
 
-router.post('/', createTicketValidator, validateMiddleware, roleMiddleware("CUSTOMER", "AGENT"), createTicket);
+router.post('/', createTicketValidator, validateMiddleware, roleMiddleware("SUPER_ADMIN", "CUSTOMER", "AGENT", "COMPANY_ADMIN"), createTicket);
 
 router.put('/:id', updateTicket);
 
-router.patch('/:id', updateTicketStatus);
+router.patch('/assign-agent/:id', roleMiddleware("COMPANY_ADMIN"), agentAssignTicket);
 
-router.delete('/:id', deleteTicket);
+router.delete('/:id', roleMiddleware("SUPER_ADMIN","COMPANY_ADMIN"), deleteTicket);
 
 module.exports = router;
