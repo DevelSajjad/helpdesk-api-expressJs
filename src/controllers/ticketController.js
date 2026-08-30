@@ -20,6 +20,14 @@ const getTicketWhereCondition = (req) => {
     return where;
 };
 
+const getTicketReplyWhereCondition = (req) => {
+    const { role, companyId, id } = req.user;
+    const where = {};
+    if (role == "CUSTOMER") {
+        where.isInternal = false;
+    }
+}
+
 const includeRelations = (req) => {
     const { role } = req.user;
     const relation = {
@@ -54,8 +62,49 @@ const includeRelations = (req) => {
 
 const getTickets = async (req, res, next) => {
     try {
+        const { status, priority, departmentId, agentId, customerId, search } = req.query;
+        const where = getTicketWhereCondition(req);
+
+        if (status) {
+            where.status = status;
+        }
+        if (priority) {
+            where.priority = priority;
+        }
+        if (departmentId) {
+            where.departmentId = departmentId;
+        }
+        if (agentId) {
+            where.agentId = agentId;
+        }
+
+        if (customerId) {
+            where.customerId = customerId;
+        }
+
+        if (search) {
+            where.OR = [
+                {
+                    subject: {
+                        contains: search,
+                    }
+                },
+
+                {
+                    ticketNumber: {
+                        contains: search,
+                    }
+                },
+
+                {
+                    description: {
+                        contains: search,
+                    }
+                }
+            ];
+        }
         const result = await prisma.ticket.findMany({
-            where : getTicketWhereCondition(req),
+            where,
             include: includeRelations(req),
             orderBy: {
                 id: "desc"
@@ -259,10 +308,11 @@ const getTicketReplies = async (req, res, next) => {
             return next(new AppError("Ticket not found", 404));
         }
 
+        const whereReply = getTicketReplyWhereCondition(req);
+        whereReply.ticketId = Number(ticketId);
+
         const result = await prisma.ticketReply.findMany({
-            where : {
-                ticketId: Number(ticketId)
-            },
+            where : whereReply,
             include: {
                 ticket: {
                     select: {
@@ -275,7 +325,7 @@ const getTicketReplies = async (req, res, next) => {
                     select: {
                         id: true,
                         name: true,
-                        email: true,
+                    email: true,
                     }
                 }
             },
@@ -382,6 +432,56 @@ const ticketStatusUpdate = async (req, res, next) => {
     }
 }
 
+const createInternalTicketReply = async (req, res, next) => {
+    try {
+        const { companyId, role, id: userId } = req.user;
+        const { id: ticketId } = req.params;
+        const { message } = req.body;
+        const where = getTicketWhereCondition(req);
+        where.id = Number(ticketId);
+
+        if (!companyId) {
+            return next(new AppError("Company information is missing", 400));
+        }
+
+        const ticket = await prisma.ticket.findFirst({
+            where,
+        });
+
+        if (!ticket) {
+            return next(new AppError("Ticket not found", 404));
+        }
+
+        const result = await prisma.ticketReply.create({
+            data: {
+                message: message,
+                ticketId: Number(ticketId),
+                userId: Number(userId),
+                isInternal: true
+            },
+            include: {
+                ticket: {
+                    select: {
+                        id: true,
+                        ticketNumber: true,
+                        subject: true,
+                    }
+                },
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Internal ticket reply created successfully",
+            data: result
+        })
+
+        
+    } catch (error) {
+        next(error);
+    }
+}
+
 
 module.exports = {
     getTickets,
@@ -391,5 +491,6 @@ module.exports = {
     deleteTicket,
     createTicketReply,
     getTicketReplies,
-    ticketStatusUpdate
+    ticketStatusUpdate,
+    createInternalTicketReply
 };

@@ -120,6 +120,8 @@ model TicketReply {
   userId Int
   message String
 
+  isInternal Boolean @default(false)
+
   ticket Ticket? @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   user User? @relation(fields: [userId], references: [id])
 
