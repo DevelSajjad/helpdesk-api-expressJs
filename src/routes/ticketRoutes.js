@@ -1,13 +1,15 @@
 const express = require('express');
-const { createTicketValidator, ticketStatusUpdateValidator, createTicketReplyValidator } = require('../validators/ticketValidator');
+const { createTicketValidator, ticketStatusUpdateValidator, createTicketReplyValidator, getTicketsValidator } = require('../validators/ticketValidator');
 const validateMiddleware = require('../middleware/validateMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 
-const {getTickets, createTicket, updateTicket, agentAssignTicket, deleteTicket, getTicketReplies, createTicketReply, ticketStatusUpdate} = require('../controllers/ticketController');
+const {getTickets, createTicket, updateTicket, agentAssignTicket, deleteTicket, getTicketReplies, createTicketReply, ticketStatusUpdate, getDashboardStatisticsData} = require('../controllers/ticketController');
 
 const router = express.Router();
 
-router.get('/', roleMiddleware("SUPER_ADMIN", "CUSTOMER", "AGENT", "COMPANY_ADMIN"), getTickets);
+router.get('/dashboard-statistics', roleMiddleware("SUPER_ADMIN", "CUSTOMER", "AGENT", "COMPANY_ADMIN"), getDashboardStatisticsData);
+
+router.get('/', getTicketsValidator, validateMiddleware, roleMiddleware("SUPER_ADMIN", "CUSTOMER", "AGENT", "COMPANY_ADMIN"), getTickets);
 
 router.get('/:id', roleMiddleware("SUPER_ADMIN", "CUSTOMER", "AGENT", "COMPANY_ADMIN"), getTickets);
 

@@ -1,4 +1,4 @@
-const { body } = require("express-validator");
+const { body, query } = require("express-validator");
 
 const createTicketValidator = [
     body("subject")
@@ -51,8 +51,66 @@ const ticketStatusUpdateValidator = [
         .withMessage("Status must be OPEN, IN_PROGRESS, WAITING_FOR_CUSTOMER, RESOLVED, CLOSED, ON_HOLD, or CANCELLED."),
 ];
 
+const getTicketsValidator = [
+
+    query("page")
+        .optional()
+        .isInt({
+            min: 1
+        })
+        .withMessage(
+            "Page must be an integer greater than or equal to 1"
+        ),
+
+    query("limit")
+        .optional()
+        .isInt({
+            min: 1,
+            max: 100
+        })
+        .withMessage(
+            "Limit must be between 1 and 100"
+        ),
+
+    query("status")
+        .optional()
+        .isIn([
+            "OPEN",
+            "IN_PROGRESS",
+            "WAITING_CUSTOMER",
+            "RESOLVED",
+            "CLOSED"
+        ])
+        .withMessage(
+            "Invalid ticket status"
+        ),
+
+    query("priority")
+        .optional()
+        .isIn([
+            "LOW",
+            "MEDIUM",
+            "HIGH",
+            "URGENT"
+        ])
+        .withMessage(
+            "Invalid ticket priority"
+        ),
+
+    query("search")
+        .optional()
+        .trim()
+        .isLength({
+            max: 255
+        })
+        .withMessage(
+            "Search must not exceed 255 characters"
+        )
+];
+
 module.exports = {
     createTicketValidator,
     createTicketReplyValidator,
     ticketStatusUpdateValidator,
+    getTicketsValidator,
 }

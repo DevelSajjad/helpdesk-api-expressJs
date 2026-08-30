@@ -20,6 +20,7 @@ const getTicketWhereCondition = (req) => {
     return where;
 };
 
+
 const getTicketReplyWhereCondition = (req) => {
     const { role, companyId, id } = req.user;
     const where = {};
@@ -59,6 +60,69 @@ const includeRelations = (req) => {
 
     return relation;
 };
+
+const getDashboardStatisticsData = async (req, res, next) => {
+    try {
+        const where = getTicketWhereCondition(req);
+        const [ total, open, inProgress, waitingForCustomer, resolved, closed ] = await Promise.all([
+            prisma.ticket.count({
+                where
+            }),
+
+            prisma.ticket.count({
+                where: {
+                    ...where,
+                    status: "OPEN"
+                }
+            }),
+
+            prisma.ticket.count({
+                where: {
+                    ...where,
+                    status: "IN_PROGRESS"
+                }
+            }),
+
+            prisma.ticket.count({
+                where: {
+                    ...where,
+                    status: "WAITING_FOR_CUSTOMER"
+                }
+            }),
+
+            prisma.ticket.count({
+                where: {
+                    ...where,
+                    status: "RESOLVED"
+                }
+            }),
+
+            prisma.ticket.count({
+                where: {
+                    ...where,
+                    status: "CLOSED"
+                }
+            }),
+
+        ]);
+
+        return res.status(200).json({
+            success: true,
+            message: "Dashboard statistics data fetch successfully",
+       
+            data: {
+                total,
+                open,
+                inProgress,
+                waitingForCustomer,
+                resolved,
+                closed
+            }
+        })
+    } catch (error) {
+        next(error);
+    }
+}
 
 const getTickets = async (req, res, next) => {
     try {
@@ -514,5 +578,6 @@ module.exports = {
     createTicketReply,
     getTicketReplies,
     ticketStatusUpdate,
-    createInternalTicketReply
+    createInternalTicketReply,
+    getDashboardStatisticsData
 };
