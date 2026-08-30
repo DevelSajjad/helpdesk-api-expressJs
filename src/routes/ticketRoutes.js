@@ -3,11 +3,13 @@ const { createTicketValidator } = require('../validators/ticketValidator');
 const validateMiddleware = require('../middleware/validateMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 
-const {getTickets, createTicket, updateTicket, updateTicketStatus, deleteTicket} = require('../controllers/ticketController');
+const {getTickets, getTicket, createTicket, updateTicket, updateTicketStatus, deleteTicket} = require('../controllers/ticketController');
 
 const router = express.Router();
 
-router.get('/', getTickets);
+router.get('/', roleMiddleware("SUPER_ADMIN", "CUSTOMER", "AGENT"), getTickets);
+
+router.get('/:id', roleMiddleware("SUPER_ADMIN", "CUSTOMER", "AGENT"), getTicket);
 
 router.post('/', createTicketValidator, validateMiddleware, roleMiddleware("CUSTOMER", "AGENT"), createTicket);
 

@@ -1,11 +1,113 @@
 const AppError = require('../utils/AppError');
 const prisma = require("../config/prisma");
 
-const getTickets = (req, res) => {
-    res.status(200).json({
-        message: "All tickets"
-    })
+const getTicketWhereCondition = (req) => {
+    const { companyId, role } = req.user;
+    const where = {};
+
+    if (role != "SUPER_ADMIN") {
+        where.companyId = companyId;
+    }
+
+    if (role == "CUSTOMER") {
+        where.customerId = req.user.id;
+    }
+
+    if (role == "AGENT") {
+        where.agentId = req.user.id;
+    }
+
+    return where;
 }
+
+const getTickets = async (req, res, next) => {
+   try {
+    const result = await prisma.ticket.findMany({
+        where: getTicketWhereCondition(req),
+        include: {
+            department: {
+                select: {
+                    id: true,
+                    name: true,
+                }
+            },
+            customer: {
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                }
+            },
+            agent: {
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                }
+            }
+        },
+        orderBy: {
+            id: "desc"
+        },
+
+    });
+
+    return res.status(200).json({
+        success: true,
+        message: "Tickets fetched successfully",
+        tickets: result
+    })
+   } catch (error) {
+    next(error);
+   }
+}
+
+const getTicket = async (req, res, next) => {
+
+   try {
+    const { id } = req.params;
+    const where = getTicketWhereCondition(req);
+    where.id = Number(id);
+    const result = await prisma.ticket.findFirst({
+        where,
+        include: {
+            department: {
+                select: {
+                    id: true,
+                    name: true,
+                }
+            },
+            customer: {
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                }
+            },
+            agent: {
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                }
+            }
+        },
+        orderBy: {
+            id: "desc"
+        },
+
+    });
+
+    return res.status(200).json({
+        success: true,
+        message: "Ticket fetched successfully",
+        tickets: result
+    })
+   } catch (error) {
+    next(error);
+   }
+}
+
 
 const createTicket = async (req, res, next) => {
     const {department_id, subject, description, priority, status} = req.body;
