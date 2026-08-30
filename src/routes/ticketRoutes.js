@@ -1,9 +1,9 @@
 const express = require('express');
-const { createTicketValidator } = require('../validators/ticketValidator');
+const { createTicketValidator, ticketStatusUpdateValidator, createTicketReplyValidator } = require('../validators/ticketValidator');
 const validateMiddleware = require('../middleware/validateMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 
-const {getTickets, createTicket, updateTicket, agentAssignTicket, deleteTicket} = require('../controllers/ticketController');
+const {getTickets, createTicket, updateTicket, agentAssignTicket, deleteTicket, getTicketReplies, createTicketReply, ticketStatusUpdate} = require('../controllers/ticketController');
 
 const router = express.Router();
 
@@ -18,5 +18,11 @@ router.put('/:id', updateTicket);
 router.patch('/assign-agent/:id', roleMiddleware("COMPANY_ADMIN"), agentAssignTicket);
 
 router.delete('/:id', roleMiddleware("SUPER_ADMIN","COMPANY_ADMIN"), deleteTicket);
+
+router.get('/replies/:id', roleMiddleware("COMPANY_ADMIN", "AGENT", "CUSTOMER"), getTicketReplies);
+
+router.post('/replies/:id', createTicketReplyValidator, validateMiddleware, roleMiddleware("COMPANY_ADMIN", "AGENT", "CUSTOMER"), createTicketReply);
+
+router.patch('/replies/status/:id', ticketStatusUpdateValidator, validateMiddleware, roleMiddleware("COMPANY_ADMIN", "AGENT", "CUSTOMER"), ticketStatusUpdate);
 
 module.exports = router;

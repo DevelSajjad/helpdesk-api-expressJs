@@ -32,6 +32,27 @@ const createTicketValidator = [
         .withMessage("Department must be an integer."),
 ];
 
+const createTicketReplyValidator = [
+    body("message")
+        .trim()
+        .notEmpty()
+        .withMessage("Message is required.")
+        .isString()
+        .withMessage("Message must be a string.")
+        .isLength({ max: 1000})
+        .withMessage("Message must be less than 1000 characters."),
+];
+
+const ticketStatusUpdateValidator = [
+    body("status")
+        .notEmpty()
+        .withMessage("Status is required.")
+        .isIn(["OPEN", "IN_PROGRESS", "WAITING_FOR_CUSTOMER", "RESOLVED", "CLOSED", "ON_HOLD", "CANCELLED"])
+        .withMessage("Status must be OPEN, IN_PROGRESS, WAITING_FOR_CUSTOMER, RESOLVED, CLOSED, ON_HOLD, or CANCELLED."),
+];
+
 module.exports = {
     createTicketValidator,
+    createTicketReplyValidator,
+    ticketStatusUpdateValidator,
 }

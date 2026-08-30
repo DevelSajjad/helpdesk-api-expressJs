@@ -39,6 +39,7 @@ model User {
   company Company? @relation(fields: [companyId], references: [id])
   createdTickets Ticket[] @relation("CustomerTicket")
   assignedTickets Ticket[] @relation("AgentTicket")
+  ticketReplies TicketReply[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -86,6 +87,8 @@ model Ticket {
   customer User? @relation("CustomerTicket", fields: [customerId], references: [id])
   agent User? @relation("AgentTicket", fields: [agentId], references: [id])
 
+  replies TicketReply[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -109,4 +112,19 @@ enum TicketPriority {
   MEDIUM
   HIGH
   EMERGENCY
+}
+
+model TicketReply {
+  id    Int   @id   @default(autoincrement())
+  ticketId Int
+  userId Int
+  message String
+
+  ticket Ticket? @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ticketId, userId])
 }

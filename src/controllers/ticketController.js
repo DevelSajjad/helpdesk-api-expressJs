@@ -6,15 +6,15 @@ const getTicketWhereCondition = (req) => {
     const where = {};
 
     if (role != "SUPER_ADMIN") {
-        where.companyId = companyId;
+        where.companyId = Number(companyId);
     }
 
     if (role == "CUSTOMER") {
-        where.customerId = id;
+        where.customerId = Number(id);
     }
 
     if (role == "AGENT") {
-        where.agentId = id;
+        where.agentId = Number(id);
     }
 
     return where;
@@ -22,7 +22,7 @@ const getTicketWhereCondition = (req) => {
 
 const includeRelations = (req) => {
     const { role } = req.user;
-    const realtion = {
+    const relation = {
         department: {
             select: {
                 id: true,
@@ -39,22 +39,27 @@ const includeRelations = (req) => {
         }
     }
 
-    if (role == "SUPER_ADMIN") {
-        realtion.agent = {
+    // if (role == "SUPER_ADMIN") {
+        relation.agent = {
             select: {
                 id: true,
                 name: true,
                 email: true,
             }
         }
-    }
+    // }
+
+    return relation;
 };
 
 const getTickets = async (req, res, next) => {
     try {
         const result = await prisma.ticket.findMany({
             where : getTicketWhereCondition(req),
-            include: includeRelations(req)
+            include: includeRelations(req),
+            orderBy: {
+                id: "desc"
+            }
         });
 
         return res.status(200).json({
@@ -87,95 +92,6 @@ const getTicket = async (req, res, next) => {
         next(error);
     }
 }
-
-const getTickets = async (req, res, next) => {
-   try {
-    const result = await prisma.ticket.findMany({
-        where: getTicketWhereCondition(req),
-        include: {
-            department: {
-                select: {
-                    id: true,
-                    name: true,
-                }
-            },
-            customer: {
-                select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                }
-            },
-            agent: {
-                select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                }
-            }
-        },
-        orderBy: {
-            id: "desc"
-        },
-
-    });
-
-    return res.status(200).json({
-        success: true,
-        message: "Tickets fetched successfully",
-        tickets: result
-    })
-   } catch (error) {
-    next(error);
-   }
-}
-
-const getTicket = async (req, res, next) => {
-
-   try {
-    const { id } = req.params;
-    const where = getTicketWhereCondition(req);
-    where.id = Number(id);
-    const result = await prisma.ticket.findFirst({
-        where,
-        include: {
-            department: {
-                select: {
-                    id: true,
-                    name: true,
-                }
-            },
-            customer: {
-                select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                }
-            },
-            agent: {
-                select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                }
-            }
-        },
-        orderBy: {
-            id: "desc"
-        },
-
-    });
-
-    return res.status(200).json({
-        success: true,
-        message: "Ticket fetched successfully",
-        tickets: result
-    })
-   } catch (error) {
-    next(error);
-   }
-}
-
 
 const createTicket = async (req, res, next) => {
     const {department_id, subject, description, priority, status} = req.body;
@@ -326,11 +242,154 @@ const deleteTicket = (req, res) => {
     })
 }
 
+const getTicketReplies = async (req, res, next) => {
+    try {
+        const { companyId } = req.user;
+        const { id: ticketId } = req.params;
+        const where = getTicketWhereCondition(req);
+        where.id = Number(ticketId);
+        if (!companyId) {
+            return next(new AppError("Company information is missing", 400));
+        }
+        const ticket = await prisma.ticket.findFirst({
+            where,
+        });
+
+        if (!ticket) {
+            return next(new AppError("Ticket not found", 404));
+        }
+
+        const result = await prisma.ticketReply.findMany({
+            where : {
+                ticketId: Number(ticketId)
+            },
+            include: {
+                ticket: {
+                    select: {
+                        id: true,
+                        ticketNumber: true,
+                        subject: true,
+                    }
+                },
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    }
+                }
+            },
+            orderBy: {
+                id: "desc"
+            }
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Ticket replies fetch successfully",
+            data: result
+        })
+    } catch (error) {
+        next(error);
+    }
+}
+
+const createTicketReply = async (req, res, next) => {
+    try {
+        const { companyId, role, id: userId } = req.user;
+        const { id: ticketId } = req.params;
+        const { message } = req.body;
+        const where = getTicketWhereCondition(req);
+        where.id = Number(ticketId);
+
+        if (!companyId) {
+            return next(new AppError("Company information is missing", 400));
+        }
+
+        const ticket = await prisma.ticket.findFirst({
+            where,
+        });
+
+        if (!ticket) {
+            return next(new AppError("Ticket not found", 404));
+        }
+
+        const result = await prisma.ticketReply.create({
+            data: {
+                message: message,
+                ticketId: Number(ticketId),
+                userId: Number(userId)
+            },
+            include: {
+                ticket: {
+                    select: {
+                        id: true,
+                        ticketNumber: true,
+                        subject: true,
+                    }
+                },
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Ticket reply created successfully",
+            data: result
+        })
+
+        
+    } catch (error) {
+        next(error);
+    }
+}
+
+const ticketStatusUpdate = async (req, res, next) => {
+    try {
+        const { companyId, role, id: userId } = req.user;
+        const { id: ticketId } = req.params;
+        const { status } = req.body;
+        const where = getTicketWhereCondition(req);
+        where.id = Number(ticketId);
+
+        if (!companyId) {
+            return next(new AppError("Company information is missing", 400));
+        }
+
+        const ticket = await prisma.ticket.findFirst({
+            where,
+        });
+
+        if (!ticket) {
+            return next(new AppError("Ticket not found", 404));
+        }
+
+        const result = await prisma.ticket.update({
+            where,
+            data: {
+                status: status,
+            },
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Ticket status updated successfully",
+            data: result
+        })
+
+        
+    } catch (error) {
+        next(error);
+    }
+}
+
 
 module.exports = {
     getTickets,
     createTicket,
     updateTicket,
     agentAssignTicket,
-    deleteTicket
+    deleteTicket,
+    createTicketReply,
+    getTicketReplies,
+    ticketStatusUpdate
 };
