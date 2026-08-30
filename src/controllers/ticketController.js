@@ -62,7 +62,12 @@ const includeRelations = (req) => {
 
 const getTickets = async (req, res, next) => {
     try {
-        const { status, priority, departmentId, agentId, customerId, search } = req.query;
+        const { status, priority, departmentId, agentId, customerId, search, page = 1, limit = 1 } = req.query;
+
+        const currentPage = Number(page);
+        const perPage = Number(limit);
+        const skip = (currentPage - 1) * perPage;
+
         const where = getTicketWhereCondition(req);
 
         if (status) {
@@ -105,16 +110,33 @@ const getTickets = async (req, res, next) => {
         }
         const result = await prisma.ticket.findMany({
             where,
+
+            skip,
+
+            take: perPage,
+
             include: includeRelations(req),
             orderBy: {
                 id: "desc"
             }
         });
 
+        const total = await prisma.ticket.count({
+            where
+        })
+
+        const totalPages = Math.ceil(total / perPage);
+
         return res.status(200).json({
             success: true,
             message: "Ticket fetch successfully",
-            data: result
+            data: result,
+            meta: {
+                total,
+                currentPage,
+                perPage,
+                totalPages,
+            }
         })
     } catch (error) {
         next(error);
