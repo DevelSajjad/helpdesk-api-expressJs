@@ -88,6 +88,7 @@ model Ticket {
   agent User? @relation("AgentTicket", fields: [agentId], references: [id])
 
   replies TicketReply[]
+  ticketAttachment TicketAttachment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -129,4 +130,19 @@ model TicketReply {
   updatedAt DateTime @updatedAt
 
   @@index([ticketId, userId])
+}
+
+model TicketAttachment {
+  id    Int   @id   @default(autoincrement())
+  ticketId  Int
+  fileName String
+  originalName String?
+  mimeType  String?
+  fileSize Int?
+
+  createdAt   DateTime  @default(now())
+
+  ticket  Ticket  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
 }
