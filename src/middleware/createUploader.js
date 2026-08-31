@@ -32,7 +32,7 @@ const createUploader = (folderName, allowedType = /jpeg|jpg|png|gif/, maxMb = 5)
     }
 
     return multer({
-        destination,
+        storage,
         limits: { fileSize: maxMb * 1024 * 1024},
         fileFilter
     });
