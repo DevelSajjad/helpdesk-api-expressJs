@@ -568,6 +568,37 @@ const createInternalTicketReply = async (req, res, next) => {
     }
 }
 
+const uploadTicketAttachment = async (req, res, next) => {
+    try {
+        const { companyId, role, id: userId } = req.user;
+        const { id: ticketId } = req.params;
+        if (!companyId) {
+            return next(new AppError("Company information is missing", 400));
+        }
+        const where = getTicketWhereCondition(req);
+        where.id = Number(ticketId);
+        const ticket = await prisma.ticket.findFirst({
+            where
+        });
+        if (!ticket) {
+            return next(new AppError("Ticket not found", 404));
+        }
+
+        return res.status(200).json({
+            req
+        })
+
+        const attachment = await prisma.ticketAttachment.create({
+            data: {
+                ticketId: Number(ticketId),
+                fileName: req.file.path,
+            }
+        })
+    } catch (error) {
+        next(error);
+    }
+}
+
 
 module.exports = {
     getTickets,
@@ -579,5 +610,6 @@ module.exports = {
     getTicketReplies,
     ticketStatusUpdate,
     createInternalTicketReply,
-    getDashboardStatisticsData
+    getDashboardStatisticsData,
+    uploadTicketAttachment
 };

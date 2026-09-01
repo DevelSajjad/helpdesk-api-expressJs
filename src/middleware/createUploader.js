@@ -5,12 +5,12 @@ const fs = require('fs');
 const createUploader = (folderName, allowedType = /jpeg|jpg|png|gif/, maxMb = 5) => {
     const storage = multer.diskStorage({
         destination: (req, file, cb) => {
-            const uploadPath = path.join(__dirname, `..\..\${folderName}`);
+            const uploadPath = path.join(__dirname, `../../uploads/${folderName}`);
             if (!fs.existsSync(uploadPath)) {
                 fs.mkdirSync(uploadPath, { recursive: true });
             }
 
-            cb(null, destination);
+            cb(null, uploadPath);
         },
 
         filename: (req, file, cb) => {
