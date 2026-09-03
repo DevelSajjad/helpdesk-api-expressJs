@@ -1,5 +1,6 @@
 const AppError = require('../utils/AppError');
 const prisma = require("../config/prisma");
+const fs = require('fs');
 
 const getTicketWhereCondition = (req) => {
     const { role, companyId, id } = req.user; 
@@ -126,7 +127,7 @@ const getDashboardStatisticsData = async (req, res, next) => {
 
 const getTickets = async (req, res, next) => {
     try {
-        const { status, priority, departmentId, agentId, customerId, search, page = 1, limit = 1 } = req.query;
+        const { status, priority, departmentId, agentId, customerId, search, page = 1, limit = 20 } = req.query;
 
         const currentPage = Number(page);
         const perPage = Number(limit);
@@ -581,20 +582,24 @@ const uploadTicketAttachment = async (req, res, next) => {
             where
         });
         if (!ticket) {
+            if (req.file?.path) fs.unlinkSync(req.file.path);
             return next(new AppError("Ticket not found", 404));
         }
-
-        return res.status(200).json({
-            req
-        })
 
         const attachment = await prisma.ticketAttachment.create({
             data: {
                 ticketId: Number(ticketId),
-                fileName: req.file.path,
+                fileName: `/uploads/ticket/${req.file.filename}`,
             }
         })
     } catch (error) {
+        if (req.file?.path) {
+            try {
+                fs.unlinkSync(req.file.path);
+            } catch (__) {
+                
+            }
+        }
         next(error);
     }
 }

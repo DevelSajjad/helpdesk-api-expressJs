@@ -1,4 +1,5 @@
 require('dotenv').config();
+const path = require('path');
 
 const express = require('express');
 
@@ -25,6 +26,8 @@ const errorMiddleware = require('./middleware/errorMiddleware');
 const app = express();
 
 const PORT = process.env.PORT;
+
+app.use("/uploads", express.static(path.join(__dirname, '../uploads')));
 
 app.use(express.json());
 

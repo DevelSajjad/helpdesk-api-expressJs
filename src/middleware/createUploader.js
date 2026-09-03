@@ -3,9 +3,10 @@ const path = require('path');
 const fs = require('fs');
 
 const createUploader = (folderName, allowedType = /jpeg|jpg|png|gif/, maxMb = 5) => {
+    
     const storage = multer.diskStorage({
         destination: (req, file, cb) => {
-            const uploadPath = path.join(__dirname, `../../uploads/${folderName}`);
+            const uploadPath = path.join( process.cwd(), 'uploads', folderName);
             if (!fs.existsSync(uploadPath)) {
                 fs.mkdirSync(uploadPath, { recursive: true });
             }
@@ -25,7 +26,7 @@ const createUploader = (folderName, allowedType = /jpeg|jpg|png|gif/, maxMb = 5)
         const isMimeValid = allowedType.test(file.mimetype);
 
         if (isExtValid && isMimeValid) {
-            cb(null, true);
+            return cb(null, true);
         }
 
         cb(new Error("File type not supported!"));
