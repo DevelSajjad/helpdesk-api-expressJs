@@ -1,6 +1,7 @@
 const AppError = require('../utils/AppError');
 const prisma = require("../config/prisma");
 const fs = require('fs');
+const path = require('path');
 
 const getTicketWhereCondition = (req) => {
     const { role, companyId, id } = req.user; 
@@ -658,12 +659,20 @@ const downloadTicketAttachment = async (req, res, next) => {
         if (!attachment) {
             return next(new AppError("Attachment not found", 404));
         }
-        const filePath = path.join(__dirname, "..", "uploads", attachment.fileName);
+
+        const filePath = path.join(process.cwd(), attachment.fileName);
         console.log(filePath);
-        reutrn ;
         if (!fs.existsSync(filePath)) {
             return next(new AppError("Attachment file not found", 404));
         }
+
+        return res.sendFile(filePath, 
+            (error) => {
+                if (error) {
+                    next(error);
+                }
+            }
+        )
      
     } catch (error) {
         next(error);
