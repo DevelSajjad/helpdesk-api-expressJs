@@ -599,6 +599,72 @@ const uploadTicketAttachment = async (req, res, next) => {
     }
 }
 
+const getTicketAttachments = async (req, res, next) => {
+    try {
+        const { id: ticketId } = req.params;
+        const { companyId } = req.user;
+        if (!companyId) {
+            return next(new AppError("Company information is missing", 400));
+        }
+        const where = getTicketWhereCondition(req);
+        where.id = Number(ticketId);
+        const ticket = await prisma.ticket.findFirst({
+            where
+        });
+        if (!ticket) {
+            return next(new AppError("Ticket not found", 404));
+        }
+        const attachments = await prisma.ticketAttachment.findMany({
+            where: {
+                ticketId: Number(ticketId)
+            }
+        });
+        return res.status(200).json({
+            success: true,
+            message: "Ticket attachments fetch successfully",
+            data: attachments
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+const downloadTicketAttachment = async (req, res, next) => {
+    try {
+        const { id: ticketId, attachmentId } = req.params;
+        const { companyId } = req.user;
+        if (!companyId) {
+            return next(new AppError("Company information is missing", 400));
+        }
+        const where = getTicketWhereCondition(req);
+        where.id = Number(ticketId);
+        const ticket = await prisma.ticket.findFirst({
+            where
+        });
+        if (!ticket) {
+            return next(new AppError("Ticket not found", 404));
+        }
+        const attachment = await prisma.ticketAttachment.findFirst({
+            where: {
+                id: Number(attachmentId),
+                ticketId: Number(ticketId)
+            }
+        });
+        if (!attachment) {
+            return next(new AppError("Attachment not found", 404));
+        }
+        const filePath = path.join(__dirname, "..", "uploads", attachment.fileName);
+        console.log(filePath);
+        reutrn ;
+        if (!fs.existsSync(filePath)) {
+            return next(new AppError("Attachment file not found", 404));
+        }
+     
+    } catch (error) {
+        next(error);
+    }
+}
+
 
 module.exports = {
     getTickets,
@@ -611,5 +677,7 @@ module.exports = {
     ticketStatusUpdate,
     createInternalTicketReply,
     getDashboardStatisticsData,
-    uploadTicketAttachment
+    uploadTicketAttachment,
+    getTicketAttachments,
+    downloadTicketAttachment
 };

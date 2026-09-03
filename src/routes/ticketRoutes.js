@@ -5,7 +5,7 @@ const roleMiddleware = require('../middleware/roleMiddleware');
 
 const createUploader = require('../middleware/createUploader');
 
-const {getTickets, createTicket, updateTicket, agentAssignTicket, deleteTicket, getTicketReplies, createTicketReply, ticketStatusUpdate, getDashboardStatisticsData, uploadTicketAttachment} = require('../controllers/ticketController');
+const {getTickets, createTicket, updateTicket, agentAssignTicket, deleteTicket, getTicketReplies, createTicketReply, ticketStatusUpdate, getDashboardStatisticsData, uploadTicketAttachment, getTicketAttachments, downloadTicketAttachment} = require('../controllers/ticketController');
 
 const router = express.Router();
 
@@ -30,5 +30,9 @@ router.post('/replies/:id', createTicketReplyValidator, validateMiddleware, role
 router.patch('/replies/status/:id', ticketStatusUpdateValidator, validateMiddleware, roleMiddleware("COMPANY_ADMIN", "AGENT", "CUSTOMER"), ticketStatusUpdate);
 
 router.post('/attachment/:id', createUploader("ticket").single("attachment"), roleMiddleware("COMPANY_ADMIN", "AGENT", "CUSTOMER"), uploadTicketAttachment);
+
+router.get('/attachments/:id', roleMiddleware("COMPANY_ADMIN", "AGENT", "CUSTOMER"), getTicketAttachments);
+
+router.get('/attachments/:id/:attachmentId', roleMiddleware("COMPANY_ADMIN", "AGENT", "CUSTOMER"), downloadTicketAttachment);
 
 module.exports = router;
